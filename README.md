@@ -72,7 +72,7 @@ And on naming:
 | CIP-0023 Fair Min Fees | 1 (`minPoolMargin`) | `MERGED`, logic `NOT STARTED`, activation at intra-era PV13 | Open, could defer to PV13 (Section 8) |
 | CIP-0050 Pledge Leverage | 1 (`maxPledgeLeverage`) | `MERGED` | **Yes** |
 | Peras (CIP-0140) | 5 (activation at intra-era PV13) | `NOT STARTED` (issue #5966) | Open, could defer to PV13 (Section 10) |
-| Plutus V4 context | Cost model entry only, no new parameter | `MERGED` | No |
+| Plutus V4 | Cost model entry only, no new parameter | `MERGED` | No |
 
 **Dijkstra introduces 20 new parameters in the code.** 15 are there today at parameter-update keys 34 to 48; the 7 Peras ones need a ledger PR to add them and assign their keys, and their list is not settled (Section 10). All 22 have to be in the code at PV12, whether or not they do anything yet, because the era's parameter set is fixed at the era boundary.
 
@@ -98,6 +98,8 @@ Sections 6 to 9 use the same columns.
 
 **Unit on chain.** The unit the value carries in a governance action, which is not always the unit its specification uses. Differences are called out on the row. Dimensionless parameters have no unit, so the column gives the CDDL type instead: `unit_interval` is 0 to 1, `nonnegative_interval` has no upper bound, and both are carried as exact rationals rather than decimals. Bounds on them are conventionally written as decimals, as the ratified text does in TC-01, "*treasuryCut* must not be lower than 0.1 (10%)".
 
+Section 10 (Peras) has it's own layout, not too different that what's use on the rest.
+
 ---
 
 ## 6. CIP-0164, Leios
@@ -110,7 +112,7 @@ Sections 6 to 9 use the same columns.
 
 ### 6.1 CIP-0164 Table 3, verbatim
 
-A verbatim copy of Table 3 at PR #1250 head `e173ea52`, row order included, so the two can be diffed mechanically. Cell padding is collapsed for legibility; every cell's content is the CIP's, and `tools/verify-spec-verbatim.py` checks it that way. Nothing is corrected here even where this document reads it differently; Section 6.3 handles those points.
+A verbatim copy of Table 3 at PR #1250 head `e173ea52`, row order included, so the two can be diffed mechanically. Cell padding is collapsed for legibility; every cell's content is the CIP's. 
 
 <div align="center">
 
@@ -152,7 +154,7 @@ The note attached to Table 3 in the CIP, verbatim:
 
 ### 6.2 In-flight variant: CIPs PR #1213 would add one or two parameters to the nine
 
-A second open PR would change the parameter set. CIP PR [#1213](https://github.com/cardano-foundation/CIPs/pull/1213) raises the Plutus resources a single transaction may use when it is carried in an endorser block. Its rows are for "Additional computational steps allowed for Plutus scripts on transactions in endorser blocks" and the matching allowance for memory, each of which "Expands the limit on computational resources per tx in an EB", and its note calls them "purely additive". The per-endorser-block budgets stay as they are; what changes is the ceiling on any one transaction inside such a block. In CIP terms that is two further rows in Table 3. In the terms this document works in, it is **one or two protocol parameters beyond the nine**, each needing a name, a key, guardrails and an initial value. Which of the two depends on the ledger.
+A second open PR would change the parameter set. CIP PR [#1213](https://github.com/cardano-foundation/CIPs/pull/1213) raises the Plutus resources a single transaction may use when it is carried in an endorser block. Its rows are for "Additional computational steps allowed for Plutus scripts on transactions in endorser blocks" and the matching allowance for memory, each of which "Expands the limit on computational resources per tx in an EB", and its note calls them "purely additive". The per-endorser-block budgets stay as they are; what changes is the ceiling on any one transaction inside such a block. In CIP terms that is two further rows in Table 3. In the terms this document works in, it is **two protocol parameters beyond the nine**, each needing a name, a key, guardrails and an initial value. Which of the two depends on the ledger.
 
 Verbatim, the two rows it adds, under its own Table 3 header so they render:
 
@@ -161,30 +163,16 @@ Verbatim, the two rows it adds, under its own Table 3 header so they render:
 | Maximum _additional_ Plutus steps per tx in endorser block | - | step units | Additional computational steps allowed for Plutus scripts on transactions in endorser blocks | Expands the limit on computational resources per tx in an EB |
 | Maximum _additional_ Plutus memory per tx in endorser block | - | memory units | Maximum memory allowed for Plutus scripts in a single endorser block | Expands the limit on memory resources per tx in an EB |
 
-And the note it puts in place of the one in Section 6.1, verbatim:
-
-> [!NOTE]
->
-> The per-transaction limits per EB are purely additive, but make applications
-> that rely on it prone to **threat escalation from mere impact in
-> high-throughput to general liveness**: any throughput-lowering attack on
-> certification would prevent inclusion (liveness) of high plutus budget
-> transactions.
->
-> For example, a 26% stake attacker can trivially attack leios throughput with a
-> > 75% certification threshold. If an application would rely on higher (than what
-> is available in praos) plutus demand transactions, those would not get
-> included at all during such an attack.
 
 **Consequence for this specification.** If #1213 gets merged for PV12, the constitution update must name and bound an additional per-transaction Plutus budget for EBs. Whether that is one parameter or two depends on the ledger.
 
-**Where this stands.** The ledger implements the nine, in #1250's shape. The parameters #1213 proposes are under active investigation and consideration, likely differed to PV13.
+**Where this stands.** The ledger implements the nine, in #1250's shape. The parameters #1213 proposes are under active investigation and consideration, likely differed to a later era.
 
 ### 6.3 The nine parameters
 
-Columns as set out in Section 5. Naming convention on the ledger side, per PR #6002: the `leios` prefix marks the parameters governing the protocol's rounds and its voting committee, and the size limits are named after what they bound, in the manner of the existing `maxTxSize` and `maxRefScriptSizePerBlock`. That is why the CIP's "Maximum endorser block size" is `maxEndorserBlockReferencesSize` on chain: what it bounds is the list of transaction references. two-sided.
+Columns as set out in Section 5. Naming convention on the ledger side, per PR #6002: the `leios` prefix marks the parameters governing the protocol's rounds and its voting committee, and the size limits are named after what they bound, in the manner of the existing `maxTxSize` and `maxRefScriptSizePerBlock`. That is why the CIP's "Maximum endorser block size" is `maxEndorserBlockReferencesSize` on chain: what it bounds is the list of transaction references.
 
-Ten CIP rows map to nine ledger parameters: the Plutus step and memory budgets are one value at key 47, the same shape as the existing `maxBlockExecutionUnits`. Two rows repay a second look, since searching the ledger for the CIP's wording will not find them: $S_\text{EB}$ and $L_\text{hdr}$.
+Ten CIP rows map to nine ledger parameters: the Plutus step and memory budgets are one value at key 47, the same shape as the existing `maxBlockExecutionUnits`.
 
 | CIP-0164 name | Symbol | Ledger name | Update key | Unit on chain | Groups | Status |
 | :---- | :---- | :---- | :---- | :---- | :---- | :---- |
@@ -201,13 +189,13 @@ Ten CIP rows map to nine ledger parameters: the Plutus step and memory budgets a
 
 The `[memory]` and `[steps]` notation follows the constitution's treatment of `maxBlockExecutionUnits`, guardrailed separately per index. On chain the two are one value at key 47, a pair ordered **memory first** (`ex_units = [mem, steps]`); these two rows are the only place this table departs from Table 3's order. An update to that key carries both components.
 
-**Units.** CIP-0164 gives the three timing parameters in seconds; The implementation uses milliseconds, so 1 s, 4 s and 7 s are 1,000, 4,000 and 7,000. **This document writes every timing value in milliseconds.** Aligning the CIP's Units column is open issue 2.
+**Units.** CIP-0164 gives the three timing parameters in seconds; The implementation uses milliseconds, so 1 s, 4 s and 7 s are 1000 ms, 4,000ms and 7,000ms. **This document writes every timing value in milliseconds.** Aligning the CIP's Units column is open issue 2.
 
 ### 6.4 Relations: the constraints these parameters must jointly satisfy
 
 Leios security constrains the timing parameters jointly, against each other and against network characteristics that are measured rather than governed. Tables 1 and 2 are those characteristics, verbatim.
 
-**Line links point at [CIPs PR #1250](https://github.com/cardano-foundation/CIPs/pull/1250), head `e173ea52`, not at `master`.** The line numbers differ between the two, so following a link while reading `master` lands in the wrong place.
+**Line links point at [CIPs PR #1250](https://github.com/cardano-foundation/CIPs/pull/1250), head `e173ea52`, not at `master`.** 
 
 <div align="center">
 
@@ -337,17 +325,22 @@ ADR-9 names these four descriptively rather than as identifiers, so the first co
 
 Note on the stability of the parameters:
 
+> [!NOTE]
+>
 > Upstream is [CIP-0140](https://github.com/cardano-foundation/CIPs/tree/master/CIP-0140), that defined `Params` record defines seven protocol parameters: $U$ round length, $L$ block-selection offset, $A$ certificate expiration, $R$ chain-ignorance period, $K$ cool-down period, $B$ certification boost and $\tau$ quorum. Committee size $n$ appears only in its feasible-values table. Some of those parameters are dependent and some are not governable.
 >
-> **The parameter list is final but not yet stabilized in all sources.** Sources are:
+> **The parameter list is final but not yet stabilized in all sources.**
 > 
-> - [Peras decision log](https://github.com/tweag/cardano-peras/blob/main/doc/adr/0003-protocol-parameters.md) that discusses each parameter
-> - [cardano-peras#283](https://github.com/tweag/cardano-peras/issues/283) issue that tracks updating and tracking parameters in all places
-> - [cardano-tracker#5966](https://github.com/IntersectMBO/cardano-ledger/issues/5966) ledger issue that is tracking addition on parameters
-> - This document
-> - CIP-140
+> Sources are:
+> 
+> - [Peras decision log](https://github.com/tweag/cardano-peras/blob/main/doc/adr/0003-protocol-parameters.md) that discusses each parameter and if it should be a gouvernable or not;
+> - [cardano-peras#283](https://github.com/tweag/cardano-peras/issues/283) issue that tracks updating and tracking parameters in all places;
+> - [cardano-tracker#5966](https://github.com/IntersectMBO/cardano-ledger/issues/5966) ledger issue that is tracking the addition on parameters;
+> - This document;
+> - [CIP-140](https://cips.cardano.org/cip/CIP-0140);
 >
-> At this point peras decision log, peras tracker and ledger tracker are in sync and CIP update is a work in progress. >
+> At this point peras decision log, peras tracker and ledger tracker are in sync and CIP update is a work in progress.
+> 
 > Nothing has landed in the ledger, so none of these has a key or a settled name, and a PR is needed before the CDDL freezes. Whichever set is agreed, these are consensus parameters of the same kind as the Leios nine, so the placement to expect is **TechnicalGroup** for the DRep threshold and **SecurityGroup** so that changing any of them also requires an SPO vote.
 
 | Parameter | Symbol | Units | Description | Default |
@@ -358,11 +351,17 @@ Note on the stability of the parameters:
 | `ppPerasBootstrapRound` | $R_\text{bootstrap}$ | StrictMaybe Word64 | Peras round number used to manually bootstrap Peras voting for the first time and to resynchronize voting after unexpected failures. | Nothing |
 | `ppPerasHealingFactor` | `h` | Rational | coefficient in the $T_\text{heal}$ formula | 2 |
 
-Committee size $n$ is a governed quantity in CIP-0140's feasible-values table but not a field of its `Params` record, and no implementation list carries it. There are some discussions how to track committee size and a committee selection algorithm with few various approaches, that affect the certificate size. $n$ parameter is required only in one of those, but so far Peras team believes that including this parameter is the cleanest and safest approach, no matter what decision will take an effect.
+> [!NOTE]
+> 
+> Committee size $n$ is a governed quantity in CIP-0140's feasible-values table but not a field of its `Params` record, and no implementation list carries it. There are some discussions how to track committee size and a committee selection algorithm with few various approaches, that affect the certificate size. $n$ parameter is required only in one of those, but so far Peras team believes that including this parameter is the cleanest and safest approach, no matter what decision will take an effect.
 
 Other parameters that are mentioned in CIP could not be included as they are either non-changable without implementation modifications or have only one reasonable value.
 
-`ppPerasBootstrapRound` was not concidered in CIP-140 because CIP did not cover the Peras enablement. The Peras voting rules are defined in a way that if there were no Peras votes on the chain Peras could not start voting. There are two ways, either to modify voting rules and introduce special cases that would lead to additional research, or introduce a special parameter that would allow to unblock Peras. Peras team decided that such parameter is better solution because it largely simplify codebases, rules and introduces a way to unblock peras in case of an unforceen block operation.
+`ppPerasBootstrapRound` was not concidered in CIP-140 because CIP did not cover the Peras enablement. The Peras voting rules are defined in a way that if there were no Peras votes on the chain Peras could not start voting. There are two ways how to bootstrap Peras, either to modify voting rules and introduce special cases that would lead to additional research, or introduce a special parameter that would allow to unblock Peras. Peras team decided that such parameter is better solution because it largely simplify codebases (incl. alternative nodes), rules and introduces a way to unblock Peras in case of an unforceen situation.
+
+> [!NOTE]
+>
+> As per CIP-140, when peras will be enabled we will have to change security parameter $k$ to keep the same safety properties. However in this update we do not propose to change those as Peras in not planned to be enabled in the Hard Fork.
 
 ---
 
@@ -408,54 +407,64 @@ The ratified Appendix I uses a parameter initialism plus a sequence number (MBBS
 | `refScriptCostMultiplier` | RSCM |
 | `minPoolMargin` | MPM |
 | `maxPledgeLeverage` | MPL |
+| `ppPerasMinCandidateBlockAge` | PMCBA |
+| `ppPerasCertBoost` | PCB |
+| `ppPerasTargetCommitteeSize` | PTCS |
+| `ppPerasHealingFactor` | PHF |
+| Era length | PE |
+
 
 **Pending Peras Parameters.**
 
-### 11.3 Guardrails, per parameter
+### 11.3 Guardrails, per parameter WIP
 
 One block per parameter, to be filled in. Each carries a placeholder row showing the shape: replace it, and number upwards from `-01` as the ratified text does (MBBS-01, MBBS-02 and so on).
 
-#### `leiosAnnouncementPeriodLength` ($L_\text{hdr}$), milliseconds
+#### `leiosAnnouncementPeriodLength` ($L_\text{hdr}$), milliseconds WIP
 
 | ID | Class | Guardrail | Basis / rationale |
 | :---- | :---- | :---- | :---- |
-| LAPL-01 | (y), (x) or (~ - reason) | must / must not / should / should not … | source and reasoning |
-
-#### `leiosVotePeriodLength` ($L_\text{vote}$), milliseconds
-
-| ID | Class | Guardrail | Basis / rationale |
-| :---- | :---- | :---- | :---- |
-| LVPL-01 | (y), (x) or (~ - reason) | must / must not / should / should not … | source and reasoning |
-
-#### `leiosDiffusionPeriodLength` ($L_\text{diff}$), milliseconds
+| LAPL-01 | (y) | Must be between 0 and 5000 milliseconds | 0ms allows to turn-off announcements, 5000ms is the delta assumption of Praos. Meaningful values are around ~1000ms |
+| LAPL-02 | (y), (x) or (~ - reason) | must / must not / should / should not … | source and reasoning |
+#### `leiosVotePeriodLength` ($L_\text{vote}$), milliseconds WIP
 
 | ID | Class | Guardrail | Basis / rationale |
 | :---- | :---- | :---- | :---- |
-| LDPL-01 | (y), (x) or (~ - reason) | must / must not / should / should not … | source and reasoning |
-
-#### `leiosCommitteeSize` ($N_c$), seats
-
-| ID | Class | Guardrail | Basis / rationale |
-| :---- | :---- | :---- | :---- |
-| LCS-01 | (y), (x) or (~ - reason) | must / must not / should / should not … | source and reasoning |
-
-#### `leiosQuorumStakeThreshold` ($\tau$), `unit_interval`
+| LVPL-01 | (y) | must be between 0ms and 20000ms | 0ms allows to turn off voting; a reasonable maximum would be 20000ms, which is the expected block time at the current activeSlotCoefficient = 0.05, the whole pipeline must be shorter than the expected value of block time |
+| LVPL-02 | (y), (x) or (~ - reason) | must / must not / should / should not … | source and reasoning |
+#### `leiosDiffusionPeriodLength` ($L_\text{diff}$), milliseconds WIP
 
 | ID | Class | Guardrail | Basis / rationale |
 | :---- | :---- | :---- | :---- |
+| LDPL-01 | (y)| must not be greater than 2^32-1ms | 2^32-1ms turns certification off |
+| LDPL-02 | (x)| must be greater than [PENDING]| Depends on sizes and network topology |
+| LDPL-03 | (y), (x) or (~ - reason) | must / must not / should / should not … | source and reasoning |
+
+#### `leiosCommitteeSize` ($N_c$), seats WIP
+
+| ID | Class | Guardrail | Basis / rationale |
+| :---- | :---- | :---- | :---- |
+| LCS-01 | (y) |  be a pool count that together control [eg 95%?] of the active stake | Current meaningful value 900-1000 |
+| LCS-02 | (y), (x) or (~ - reason) | must / must not / should / should not … | source and reasoning |
+
+#### `leiosQuorumStakeThreshold` ($\tau$), `unit_interval` WIP
+
+| ID | Class | Guardrail | Basis / rationale |
+| :---- | :---- | :---- | :---- |
+| LQST-01 | (y) | must be greater than 1/2 and smaller or equal to 1 | source and reasoning |
 | LQST-01 | (y), (x) or (~ - reason) | must / must not / should / should not … | source and reasoning |
 
 #### `maxEndorserBlockReferencesSize` ($S_\text{EB}$), bytes
 
 | ID | Class | Guardrail | Basis / rationale |
 | :---- | :---- | :---- | :---- |
-| MEBRS-01 | (y), (x) or (~ - reason) | must / must not / should / should not … | source and reasoning |
+| MEBRS-01 | (y) | Must be between 0 and 1000000 (1MB); higher than what is used in the CIP to give more flexibility in parameterizing for anticipated transaction structure on mainnet (e.g. many small txs require more references to saturate the S_EB-tx parameter) | source and reasoning |
 
 #### `maxEndorserBlockTxsSize` ($S_\text{EB-tx}$), bytes
 
 | ID | Class | Guardrail | Basis / rationale |
 | :---- | :---- | :---- | :---- |
-| MEBTS-01 | (y), (x) or (~ - reason) | must / must not / should / should not … | source and reasoning |
+| MEBTS-01 | (y) | Must be between 0 and 12000000 (12MB); value range shown feasible in simulations | source and reasoning |
 
 #### `maxRefScriptSizePerEndorserBlock` ($S_\text{EB-ref}$), bytes
 
@@ -513,7 +522,43 @@ One block per parameter, to be filled in. Each carries a placeholder row showing
 
 #### Peras
 
-Left empty pending a final parameter list. Three sources name different sets (Section 10), so there is nothing stable to bound yet.
+##### `ppPerasMinCandidateBlockAge`
+
+| ID | Class | Guardrail | Basis / rationale |
+| :---- | :---- | :---- | :---- |
+| PMCBA-01 | (y), (x) or (~ - reason) | ppPerasMinCandidateBlockAge must not be lower than 30 slots | CIP-140 |
+| PMCBA-02 | (y), (x) or (~ - reason) | ppPerasMinCandidateBlockAge must not be larger than 30 slots | CIP-140 |
+
+Parameter is fixed to the value proposed in CIP-140.
+
+##### `ppPerasCertBoost`
+
+| ID | Class | Guardrail | Basis / rationale |
+| :---- | :---- | :---- | :---- |
+| PCB-01 | (y), (x) or (~ - reason) | ppPerasCertBoost must not be lower than 15 | CIP-140 |
+| PCB-02 | (y), (x) or (~ - reason) | ppPerasCertBoost must not be larger than 15 | CIP-140 |
+
+Parameter is fixed to the value proposed in CIP-140.
+
+##### `ppPerasTargetCommitteeSize`
+
+| ID | Class | Guardrail | Basis / rationale |
+| :---- | :---- | :---- | :---- |
+| PTCS-01 | (y), (x) or (~ - reason) | ppPerasTargetCommitteeSize must not be lower than 500 | CIP-140 |
+| PTCS-02 | (y), (x) or (~ - reason) | ppPerasTargetCommitteeSize must not be larger than 1000 | CIP-140 |
+
+##### `ppPerasHealingFactor`
+
+| ID | Class | Guardrail | Basis / rationale |
+| :---- | :---- | :---- | :---- |
+| PHF-01 | (y), (x) or (~ - reason) | ppPerasTargetCommitteeSize must not be lower than 1 | CIP-140 |
+| PHF-02 | (y), (x) or (~ - reason) | ppPerasTargetCommitteeSize must not be larger than 3 | CIP-140 |
+
+##### Era length
+
+| ID | Class | Guardrail | Basis / rationale |
+| :---- | :---- | :---- | :---- |
+| PE-01 | (y), (x) or (~ - reason) | epoch lenght must be a divisible by the Peras round length ($U=90$) | CIP-140 |
 
 ---
 
