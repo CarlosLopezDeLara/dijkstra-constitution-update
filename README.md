@@ -1,6 +1,6 @@
 # Dijkstra protocol parameters: specification for the constitution update, guardrails and initial settings
 
-**Status:** Draft v1.0
+**Status:** Draft v1.1
 **Authors:** Carlos Lopez de Lara (IOG), Aleksandr Vershilov (Tweag)
 **Date:** 2026-09-08
 **Supersedes:** [dijkstra-protocol-parameters-for-constitution-update](https://docs.google.com/document/d/1M649pDQtquYr4n5QBx_Q7vfzyFINQssN8Cpp553BGvA/edit?usp=sharing) (v0.2, 2026-09-01)
@@ -18,9 +18,11 @@ Section 5 says how to read the parameter tables. Sections 6 to 10 are descriptiv
 
 ## 1. Change log
 
-| Version | Date | Change |
-| :---- | :---- | :---- |
-| v1.0 | 2026-09-03 | **Replaces  [dijkstra-protocol-parameters-for-constitution-update](https://docs.google.com/document/d/1M649pDQtquYr4n5QBx_Q7vfzyFINQssN8Cpp553BGvA/edit?usp=sharing) and changes the document's purpose from working note to specification.** The previous document paraphrased the scope and sent the reader to the CIPs for the exact wording. This one keeps the CIPs authoritative and stops paraphrasing: it reproduces them verbatim at a pinned revision, refreshed whenever upstream changes, so the text here can be relied on and diffed against the source, with anything it notices raised on the CIP rather than corrected locally. |
+| Version | Date       | Change                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           |
+|:------- |:---------- |:------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| v1.1    | 2026-09-10 | Changes type of the `ppPerasHealingFactor` parameter to reflect concrete bounded CDDL type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                       |
+| v1.0    | 2026-09-03 | **Replaces  [dijkstra-protocol-parameters-for-constitution-update](https://docs.google.com/document/d/1M649pDQtquYr4n5QBx_Q7vfzyFINQssN8Cpp553BGvA/edit?usp=sharing) and changes the document's purpose from working note to specification.** The previous document paraphrased the scope and sent the reader to the CIPs for the exact wording. This one keeps the CIPs authoritative and stops paraphrasing: it reproduces them verbatim at a pinned revision, refreshed whenever upstream changes, so the text here can be relied on and diffed against the source, with anything it notices raised on the CIP rather than corrected locally. |
+| v1.2    | 2026-09-21 | Added `ppPerasQuorumThresholdSafetyMargin` parameter required for Peras security                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
 
 ---
 
@@ -349,7 +351,8 @@ Note on the stability of the parameters:
 | `ppPerasCertBoost` | $B$ | `Word16` | The extra chain weight that a certificate gives to a block. | 15 |
 | `ppPerasTargetCommitteeSize` | $n$ | `Word16` | The number of members on the voting committee. | 900 |
 | `ppPerasBootstrapRound` | $R_\text{bootstrap}$ | StrictMaybe Word64 | Peras round number used to manually bootstrap Peras voting for the first time and to resynchronize voting after unexpected failures. | Nothing |
-| `ppPerasHealingFactor` | `h` | Rational | coefficient in the $T_\text{heal}$ formula | 2 |
+| `ppPerasHealingFactor` | `h` | `PositiveInterval` | coefficient in the $T_\text{heal}$ formula | 2 |
+| `ppPerasQuorumThresholdSafetyMargin` | $\tau_\mathsf{margin}$ | `PositiveInterval` | extra margin on the top of the required quorum number | 0.1 | 
 
 > [!NOTE]
 > 
@@ -358,6 +361,8 @@ Note on the stability of the parameters:
 Other parameters that are mentioned in CIP could not be included as they are either non-changable without implementation modifications or have only one reasonable value.
 
 `ppPerasBootstrapRound` was not concidered in CIP-140 because CIP did not cover the Peras enablement. The Peras voting rules are defined in a way that if there were no Peras votes on the chain Peras could not start voting. There are two ways how to bootstrap Peras, either to modify voting rules and introduce special cases that would lead to additional research, or introduce a special parameter that would allow to unblock Peras. Peras team decided that such parameter is better solution because it largely simplify codebases (incl. alternative nodes), rules and introduces a way to unblock Peras in case of an unforceen situation.
+
+`ppPerasQuorumThresholdSafetyMargin` is required to mitigate potential security due to possible transfer of the votes to the malicious nodes.
 
 > [!NOTE]
 >
@@ -411,6 +416,7 @@ The ratified Appendix I uses a parameter initialism plus a sequence number (MBBS
 | `ppPerasCertBoost` | PCB |
 | `ppPerasTargetCommitteeSize` | PTCS |
 | `ppPerasHealingFactor` | PHF |
+| `ppPerasQuorumThresholdSafetyMargin` | PQTSM |
 | Era length | PE |
 
 
@@ -553,6 +559,12 @@ Parameter is fixed to the value proposed in CIP-140.
 | :---- | :---- | :---- | :---- |
 | PHF-01 | (y), (x) or (~ - reason) | ppPerasTargetCommitteeSize must not be lower than 1 | CIP-140 |
 | PHF-02 | (y), (x) or (~ - reason) | ppPerasTargetCommitteeSize must not be larger than 3 | CIP-140 |
+
+##### `ppPerasQuorumThresholdSafetyMargin`
+
+| ID | Class | Guardrail | Basis / rationale |
+| :---- | :---- | :---- | :---- |
+| PQTSM-01 | (y), (x) or (~ - reason) |  `ppPerasQuorumThresholdSafetyMargin` must be lower than 0.25 | Total quorum size should not extend 1 |
 
 ##### Era length
 
